@@ -1,593 +1,1098 @@
 <!DOCTYPE html>
+
 <html lang="es">
+
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>Tablero Matemático Interactivo</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
-    body, html { width: 100%; height: 100%; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #0f172a; color: #fff; }
-    
-    /* Toolbar Superior */
-    #toolbar {
-      position: absolute; top: 0; left: 0; right: 0; height: 56px;
-      background: #1e293b; display: flex; align-items: center; padding: 0 12px; gap: 8px;
-      z-index: 10; border-bottom: 1px solid #334155; overflow-x: auto; white-space: nowrap;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-    }
-    #toolbar select, #toolbar button, #toolbar input {
-      background: #334155; color: #fff; border: 1px solid #475569; padding: 7px 12px;
-      border-radius: 6px; font-size: 13px; cursor: pointer; outline: none; font-weight: 500;
-      display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s;
-    }
-    #toolbar button:hover, #toolbar select:hover { background: #475569; border-color: #64748b; }
-    #toolbar button:active { transform: scale(0.96); }
-    
-    .toolbar-group {
-      display: flex; align-items: center; gap: 6px; border-right: 1px solid #475569; padding-right: 10px; margin-right: 2px;
-    }
 
-    #canvas-container { 
-      position: absolute; top: 56px; bottom: 0; left: 0; right: 0; 
-      background: #ffffff; cursor: crosshair; touch-action: none; overflow: hidden;
-    }
-    canvas { display: block; width: 100%; height: 100%; }
-    
-    /* Indicador de Conexión */
-    #status-badge {
-      font-size: 11px; padding: 4px 8px; border-radius: 12px; font-weight: 600;
-      background: #10b981; color: white; display: inline-flex; align-items: center; gap: 4px;
-    }
-    #status-badge.offline { background: #f59e0b; }
+<meta charset="UTF-8">
 
-    .btn-danger { background: #dc2626 !important; border-color: #ef4444 !important; }
-    .btn-danger:hover { background: #b91c1c !important; }
-    .btn-primary { background: #2563eb !important; border-color: #3b82f6 !important; }
-    .btn-primary:hover { background: #1d4ed8 !important; }
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 
-    /* Modales */
-    .modal {
-      display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.65); z-index: 100; align-items: center; justify-content: center;
-      backdrop-filter: blur(2px);
-    }
-    .modal.active { display: flex; }
-    .modal-card {
-      background: #1e293b; border-radius: 12px; padding: 22px; width: 350px; max-width: 90%;
-      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5); border: 1px solid #475569; color: white;
-    }
-    .modal-card h3 { margin-bottom: 16px; font-size: 16px; color: #f8fafc; font-weight: 600; }
-    .form-group { margin-bottom: 14px; display: flex; flex-direction: column; gap: 6px; }
-    .form-group label { font-size: 12px; color: #94a3b8; }
-    .form-group input {
-      background: #334155; border: 1px solid #475569; color: white; padding: 8px 12px; border-radius: 6px; font-size: 14px;
-    }
-    .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; }
-    .symbol-btn { font-family: "Times New Roman", Georgia, serif; font-style: italic; font-weight: bold; }
-  </style>
-  <script src="/socket.io/socket.io.js"></script>
+<title>Tablero Matemático Interactivo</title>
+
+<style>
+
+* { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+
+body, html { width: 100%; height: 100%; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #0f172a; color: #fff; }
+
+
+/* Toolbar Superior */
+
+#toolbar {
+
+position: absolute; top: 0; left: 0; right: 0; height: 56px;
+
+background: #1e293b; display: flex; align-items: center; padding: 0 12px; gap: 8px;
+
+z-index: 10; border-bottom: 1px solid #334155; overflow-x: auto; white-space: nowrap;
+
+box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+
+}
+
+#toolbar select, #toolbar button, #toolbar input {
+
+background: #334155; color: #fff; border: 1px solid #475569; padding: 7px 12px;
+
+border-radius: 6px; font-size: 13px; cursor: pointer; outline: none; font-weight: 500;
+
+display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s;
+
+}
+
+#toolbar button:hover, #toolbar select:hover { background: #475569; border-color: #64748b; }
+
+#toolbar button:active { transform: scale(0.96); }
+
+
+.toolbar-group {
+
+display: flex; align-items: center; gap: 6px; border-right: 1px solid #475569; padding-right: 10px; margin-right: 2px;
+
+}
+
+
+
+#canvas-container {
+
+position: absolute; top: 56px; bottom: 0; left: 0; right: 0;
+
+background: #ffffff; cursor: crosshair; touch-action: none; overflow: hidden;
+
+}
+
+canvas { display: block; width: 100%; height: 100%; }
+
+
+/* Indicador de Conexión */
+
+#status-badge {
+
+font-size: 11px; padding: 4px 8px; border-radius: 12px; font-weight: 600;
+
+background: #10b981; color: white; display: inline-flex; align-items: center; gap: 4px;
+
+}
+
+#status-badge.offline { background: #f59e0b; }
+
+
+
+.btn-danger { background: #dc2626 !important; border-color: #ef4444 !important; }
+
+.btn-danger:hover { background: #b91c1c !important; }
+
+.btn-primary { background: #2563eb !important; border-color: #3b82f6 !important; }
+
+.btn-primary:hover { background: #1d4ed8 !important; }
+
+
+
+/* Modales */
+
+.modal {
+
+display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+
+background: rgba(0,0,0,0.65); z-index: 100; align-items: center; justify-content: center;
+
+backdrop-filter: blur(2px);
+
+}
+
+.modal.active { display: flex; }
+
+.modal-card {
+
+background: #1e293b; border-radius: 12px; padding: 22px; width: 350px; max-width: 90%;
+
+box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5); border: 1px solid #475569; color: white;
+
+}
+
+.modal-card h3 { margin-bottom: 16px; font-size: 16px; color: #f8fafc; font-weight: 600; }
+
+.form-group { margin-bottom: 14px; display: flex; flex-direction: column; gap: 6px; }
+
+.form-group label { font-size: 12px; color: #94a3b8; }
+
+.form-group input {
+
+background: #334155; border: 1px solid #475569; color: white; padding: 8px 12px; border-radius: 6px; font-size: 14px;
+
+}
+
+.modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; }
+
+.symbol-btn { font-family: "Times New Roman", Georgia, serif; font-style: italic; font-weight: bold; }
+
+</style>
+
+<script src="/socket.io/socket.io.js"></script>
+
 </head>
+
 <body>
 
-  <div id="toolbar">
-    <!-- Selección de Herramientas -->
-    <div class="toolbar-group">
-      <select id="toolSelect">
-        <option value="pen">✏️ Lápiz</option>
-        <option value="marker">🖍️ Marcador Resaltador</option>
-        <option value="select">🖐️ Mover / Editar Objeto</option>
-        <option value="pan">✋ Desplazar Pantalla (Pan)</option>
-        <option value="line">📏 Línea Recta</option>
-        <option value="numberline">🔢 Recta Numérica</option>
-        <option value="cartesian">📈 Plano Cartesiano</option>
-        <option value="eraser">🧹 Borrador</option>
-      </select>
 
-      <input type="color" id="colorPicker" value="#000000" title="Color de trazo">
-      
-      <select id="lineWidth" title="Grosor">
-        <option value="2">Fino (2px)</option>
-        <option value="5" selected>Medio (5px)</option>
-        <option value="12">Grueso (12px)</option>
-        <option value="24">Muy Grueso (24px)</option>
-      </select>
-    </div>
 
-    <!-- Simbología Matemática -->
-  <div class="tool-group">
-      <button class="symbol-btn" onclick="insertSymbol('x²')" title="Potenciación">x²</button>
-      <button class="symbol-btn" onclick="insertSymbol('xⁿ')" title="Potencia N">xⁿ</button>
-      <button class="symbol-btn" onclick="insertSymbol('√x')" title="Raíz Cuadrada">√x</button>
-      <button class="symbol-btn" onclick="insertSymbol('ⁿ√x')" title="Raíz N">ⁿ√x</button>
-      <button class="symbol-btn" onclick="insertSymbol('a/b')" title="Fracción">a/b</button>
-      <button class="symbol-btn" onclick="insertSymbol('|x|')" title="Valor Absoluto">|x|</button>
-      <button class="symbol-btn" onclick="insertSymbol('f(x)')" title="Función">f(x)</button>
-      <button class="symbol-btn" onclick="insertSymbol('π')" title="Pi">π</button>
-      <button class="symbol-btn" onclick="insertSymbol('∫ f(x) dx')" title="Integral">∫</button>
-      <button class="symbol-btn" onclick="insertSymbol('lim (x→a)')" title="Límite">lim</button>
-    </div>
-    <!-- Controles de Zoom -->
-    <div class="toolbar-group">
-      <button onclick="zoomAtCenter(1.2)" title="Acercar">🔍 +</button>
-      <button onclick="zoomAtCenter(0.8)" title="Alejar">🔍 -</button>
-      <button onclick="resetZoom()" title="Centrar Vista">🎯 Centrar</button>
-    </div>
+<div id="toolbar">
 
-    <!-- Estado y Acciones -->
-    <span id="status-badge">🟢 En Vivo</span>
-    <button class="btn-danger" onclick="clearBoard()">🗑️ Limpiar Tablero</button>
-  </div>
+<!-- Selección de Herramientas -->
 
-  <div id="canvas-container">
-    <canvas id="board"></canvas>
-  </div>
+<div class="toolbar-group">
 
-  <!-- Modal Configuración Plano Cartesiano -->
-  <div id="modalCartesian" class="modal">
-    <div class="modal-card">
-      <h3>📈 Configurar Plano Cartesiano</h3>
-      <div class="form-group"><label>Mínimo en X:</label><input type="number" id="cartMinX" value="-10"></div>
-      <div class="form-group"><label>Máximo en X:</label><input type="number" id="cartMaxX" value="10"></div>
-      <div class="form-group"><label>Mínimo en Y:</label><input type="number" id="cartMinY" value="-10"></div>
-      <div class="form-group"><label>Máximo en Y:</label><input type="number" id="cartMaxY" value="10"></div>
-      <div class="form-group"><label>Paso / Incremento de cuadrícula:</label><input type="number" id="cartStep" value="2" min="0.1" step="any"></div>
-      <div class="modal-actions">
-        <button onclick="closeModals()">Cancelar</button>
-        <button class="btn-primary" onclick="saveCartesianConfig()">Aplicar</button>
-      </div>
-    </div>
-  </div>
-  
+<select id="toolSelect">
 
-  <!-- Modal Configuración Recta Numérica -->
-  <div id="modalNumberLine" class="modal">
-    <div class="modal-card">
-      <h3>🔢 Configurar Recta Numérica</h3>
-      <div class="form-group"><label>Valor Mínimo (Inicio):</label><input type="number" id="nlMin" value="-10"></div>
-      <div class="form-group"><label>Valor Máximo (Fin):</label><input type="number" id="nlMax" value="10"></div>
-      <div class="form-group"><label>Paso / Incremento:</label><input type="number" id="nlStep" value="2" min="0.1" step="any"></div>
-      <div class="modal-actions">
-        <button onclick="closeModals()">Cancelar</button>
-        <button class="btn-primary" onclick="saveNumberLineConfig()">Aplicar</button>
-      </div>
-    </div>
-  </div>
+<option value="pen">✏️ Lápiz</option>
 
-  <script>
-    // Inicialización con soporte para conexión inestable / offline
-    let socket = null;
-    try {
-      if (typeof io !== 'undefined') {
-        socket = io({ reconnectionAttempts: 10, timeout: 5000 });
-      }
-    } catch(e){}
+<option value="marker">🖍️ Marcador Resaltador</option>
 
-    const statusBadge = document.getElementById('status-badge');
-    if (socket) {
-      socket.on('connect', () => { statusBadge.textContent = "🟢 En Vivo"; statusBadge.classList.remove('offline'); });
-      socket.on('disconnect', () => { statusBadge.textContent = "🟠 Modo Offline"; statusBadge.classList.add('offline'); });
-      socket.on('connect_error', () => { statusBadge.textContent = "🟠 Local / Sin Red"; statusBadge.classList.add('offline'); });
-    } else {
-      statusBadge.textContent = "🟠 Modo Local";
-      statusBadge.classList.add('offline');
-    }
+<option value="select">🖐️ Mover / Editar Objeto</option>
 
-    const canvas = document.getElementById('board');
-    const ctx = canvas.getContext('2d');
-    const container = document.getElementById('canvas-container');
+<option value="pan">✋ Desplazar Pantalla (Pan)</option>
 
-    let elements = JSON.parse(localStorage.getItem('tablero_elements') || '[]');
-    let currentPath = null;
-    let remotePaths = {};
-    let remoteCursors = {};
+<option value="line">📏 Línea Recta</option>
 
-    let tool = 'pen';
-    let color = '#000000';
-    let size = 5;
+<option value="numberline">🔢 Recta Numérica</option>
 
-    // MATRIZ DE TRANSFORMACIÓN INFINITA (Zoom y Desplazamiento preciso)
-    let scale = 1;
-    let offsetX = 0;
-    let offsetY = 0;
+<option value="cartesian">📈 Plano Cartesiano</option>
 
-    let isDrawing = false;
-    let startX = 0, startY = 0;
-    let lastScreenX = 0, lastScreenY = 0;
-    let selectedElement = null;
-    let editingElement = null;
-    let tempPlacementPos = null;
+<option value="eraser">🧹 Borrador</option>
 
-    function saveLocal() {
-      try { localStorage.setItem('tablero_elements', JSON.stringify(elements)); } catch(e){}
-    }
+</select>
 
-    function resizeCanvas() {
-      canvas.width = container.clientWidth;
-      canvas.height = container.clientHeight;
-      redraw();
-    }
-    window.addEventListener('resize', resizeCanvas);
 
-    document.getElementById('toolSelect').addEventListener('change', (e) => {
-      tool = e.target.value;
-      canvas.style.cursor = (tool === 'pan') ? 'grab' : ((tool === 'select') ? 'pointer' : 'crosshair');
-    });
-    document.getElementById('colorPicker').addEventListener('change', (e) => color = e.target.value);
-    document.getElementById('lineWidth').addEventListener('change', (e) => size = parseInt(e.target.value));
 
-    // Conversión de Coordenadas de Pantalla a Espacio Infinito
-    function screenToWorld(sx, sy) {
-      return { x: (sx - offsetX) / scale, y: (sy - offsetY) / scale };
-    }
+<input type="color" id="colorPicker" value="#000000" title="Color de trazo">
 
-    function getPos(e) {
-      const rect = canvas.getBoundingClientRect();
-      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-      const screenX = clientX - rect.left;
-      const screenY = clientY - rect.top;
-      const world = screenToWorld(screenX, screenY);
-      return { x: world.x, y: world.y, screenX, screenY };
-    }
 
-    function startAction(e) {
-      if (e.touches && e.touches.length > 1) return;
-      isDrawing = true;
-      const pos = getPos(e);
-      startX = pos.x; startY = pos.y;
-      lastScreenX = pos.screenX; lastScreenY = pos.screenY;
+<select id="lineWidth" title="Grosor">
 
-      if (tool === 'pen' || tool === 'marker') {
-        currentPath = { id: Date.now() + Math.random(), type: tool, color, size, points: [{ x: pos.x, y: pos.y }] };
-        if (socket) socket.emit('drawing-start', currentPath);
-      } else if (tool === 'select') {
-        selectedElement = elements.slice().reverse().find(el => isNearElement(pos, el));
-      } else if (tool === 'eraser') {
-        removeNearElements(pos);
-      } else if (tool === 'cartesian') {
-        tempPlacementPos = { x: pos.x, y: pos.y };
-        editingElement = null;
-        openCartesianModal({ minX: -10, maxX: 10, minY: -10, maxY: 10, step: 2 });
-        isDrawing = false;
-      } else if (tool === 'numberline') {
-        tempPlacementPos = { x: pos.x, y: pos.y };
-        editingElement = null;
-        openNumberLineModal({ min: -10, max: 10, step: 2 });
-        isDrawing = false;
-      }
-    }
+<option value="2">Fino (2px)</option>
 
-    function moveAction(e) {
-      const pos = getPos(e);
-      if (socket) socket.emit('cursor-move', { x: pos.x, y: pos.y, color });
+<option value="5" selected>Medio (5px)</option>
 
-      if (!isDrawing) return;
+<option value="12">Grueso (12px)</option>
 
-      if (tool === 'pan') {
-        offsetX += pos.screenX - lastScreenX;
-        offsetY += pos.screenY - lastScreenY;
-        lastScreenX = pos.screenX;
-        lastScreenY = pos.screenY;
-        redraw();
-        return;
-      }
+<option value="24">Muy Grueso (24px)</option>
 
-      if ((tool === 'pen' || tool === 'marker') && currentPath) {
-        currentPath.points.push({ x: pos.x, y: pos.y });
-        redraw();
-        if (socket) socket.emit('drawing-step', { id: currentPath.id, point: { x: pos.x, y: pos.y } });
-      } else if (tool === 'select' && selectedElement) {
-        moveElement(selectedElement, pos.x - startX, pos.y - startY);
-        startX = pos.x; startY = pos.y;
-        redraw();
-        if (socket) socket.emit('update-board', elements);
-      } else if (tool === 'eraser') {
-        removeNearElements(pos);
-      }
-    }
+</select>
 
-    function endAction() {
-      if (!isDrawing) return;
-      isDrawing = false;
+</div>
 
-      if ((tool === 'pen' || tool === 'marker') && currentPath) {
-        elements.push(currentPath);
-        if (socket) {
-          socket.emit('drawing-end', currentPath);
-          socket.emit('draw', currentPath);
-        }
-        saveLocal(); currentPath = null;
-      } else if (tool === 'line') {
-        const line = { id: Date.now(), type: 'line', x1: startX, y1: startY, x2: startX + 160, y2: startY, color, size };
-        elements.push(line);
-        if (socket) socket.emit('draw', line);
-        saveLocal(); redraw();
-      } else if (tool === 'select' && selectedElement) {
-        if (socket) socket.emit('update-board', elements);
-        saveLocal(); selectedElement = null;
-      }
-    }
 
-    // Zoom centrado exactamente en el cursor
-    canvas.addEventListener('wheel', (e) => {
-      e.preventDefault();
-      const zoomFactor = e.deltaY < 0 ? 1.12 : 0.88;
-      const rect = canvas.getBoundingClientRect();
-      zoomAtPixel(zoomFactor, e.clientX - rect.left, e.clientY - rect.top);
-    }, { passive: false });
 
-    function zoomAtPixel(factor, px, py) {
-      const newScale = Math.max(0.05, Math.min(20, scale * factor));
-      offsetX = px - (px - offsetX) * (newScale / scale);
-      offsetY = py - (py - offsetY) * (newScale / scale);
-      scale = newScale;
-      redraw();
-    }
+<!-- Simbología Matemática -->
 
-    function zoomAtCenter(factor) { zoomAtPixel(factor, canvas.width / 2, canvas.height / 2); }
-    function resetZoom() { scale = 1; offsetX = 0; offsetY = 0; redraw(); }
+<div class="tool-group">
 
-    canvas.addEventListener('dblclick', (e) => {
-      const pos = getPos(e);
-      const clickedEl = elements.slice().reverse().find(el => isNearElement(pos, el));
-      if (clickedEl) {
-        if (clickedEl.type === 'cartesian') { editingElement = clickedEl; openCartesianModal(clickedEl); }
-        else if (clickedEl.type === 'numberline') { editingElement = clickedEl; openNumberLineModal(clickedEl); }
-      }
-    });
+<button class="symbol-btn" onclick="insertSymbol('x²')" title="Potenciación">x²</button>
 
-    canvas.addEventListener('mousedown', startAction);
-    canvas.addEventListener('mousemove', moveAction);
-    canvas.addEventListener('mouseup', endAction);
-    canvas.addEventListener('touchstart', startAction, { passive: true });
-    canvas.addEventListener('touchmove', moveAction, { passive: true });
-    canvas.addEventListener('touchend', endAction);
+<button class="symbol-btn" onclick="insertSymbol('xⁿ')" title="Potencia N">xⁿ</button>
 
-    function insertSymbol(text) {
-      const c = screenToWorld(canvas.width / 2, canvas.height / 2);
-      const elem = { id: Date.now(), type: 'text', text, x: c.x, y: c.y, color, size: 32 };
-      elements.push(elem);
-      if (socket) socket.emit('draw', elem);
-      saveLocal(); redraw();
-    }
+<button class="symbol-btn" onclick="insertSymbol('√x')" title="Raíz Cuadrada">√x</button>
 
-    // RENDERIZADO
-    function drawElement(el) {
-      ctx.save();
-      ctx.strokeStyle = el.color || '#000000';
-      ctx.fillStyle = el.color || '#000000';
-      ctx.lineWidth = el.size || 2;
-      ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+<button class="symbol-btn" onclick="insertSymbol('ⁿ√x')" title="Raíz N">ⁿ√x</button>
 
-      if (el.type === 'pen') {
-        if (!el.points || el.points.length < 2) { ctx.restore(); return; }
-        ctx.beginPath();
-        ctx.moveTo(el.points[0].x, el.points[0].y);
-        for (let i = 1; i < el.points.length; i++) ctx.lineTo(el.points[i].x, el.points[i].y);
-        ctx.stroke();
-      } else if (el.type === 'marker') {
-        if (!el.points || el.points.length < 2) { ctx.restore(); return; }
-        ctx.globalAlpha = 0.35;
-        ctx.lineWidth = (el.size || 5) * 2.5;
-        ctx.beginPath();
-        ctx.moveTo(el.points[0].x, el.points[0].y);
-        for (let i = 1; i < el.points.length; i++) ctx.lineTo(el.points[i].x, el.points[i].y);
-        ctx.stroke();
-      } else if (el.type === 'text') {
-        ctx.font = `bold ${el.size || 32}px serif`;
-        ctx.fillText(el.text, el.x, el.y);
-      } else if (el.type === 'line') {
-        ctx.beginPath(); ctx.moveTo(el.x1, el.y1); ctx.lineTo(el.x2, el.y2); ctx.stroke();
-      } else if (el.type === 'numberline') {
-        const min = el.min !== undefined ? parseFloat(el.min) : -10;
-        const max = el.max !== undefined ? parseFloat(el.max) : 10;
-        const step = (el.step && parseFloat(el.step) > 0) ? parseFloat(el.step) : 2;
-        const width = 450; const range = max - min;
-        if (range <= 0) { ctx.restore(); return; }
+<button class="symbol-btn" onclick="insertSymbol('a/b')" title="Fracción">a/b</button>
 
-        ctx.lineWidth = 2;
-        ctx.beginPath(); ctx.moveTo(el.x - width/2, el.y); ctx.lineTo(el.x + width/2, el.y); ctx.stroke();
+<button class="symbol-btn" onclick="insertSymbol('|x|')" title="Valor Absoluto">|x|</button>
 
-        ctx.font = '12px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
-        for (let val = min; val <= max + 0.0001; val += step) {
-          const rVal = Math.round(val * 1000) / 1000;
-          const px = (el.x - width/2) + ((rVal - min) / range) * width;
-          ctx.beginPath(); ctx.moveTo(px, el.y - 5); ctx.lineTo(px, el.y + 5); ctx.stroke();
-          ctx.fillText(rVal.toString(), px, el.y + 8);
-        }
-      } else if (el.type === 'cartesian') {
-        const minX = parseFloat(el.minX ?? -10), maxX = parseFloat(el.maxX ?? 10);
-        const minY = parseFloat(el.minY ?? -10), maxY = parseFloat(el.maxY ?? 10);
-        const step = parseFloat(el.step || 2);
-        const w = 400, h = 400, rX = maxX - minX, rY = maxY - minY;
+<button class="symbol-btn" onclick="insertSymbol('f(x)')" title="Función">f(x)</button>
 
-        if (rX <= 0 || rY <= 0) { ctx.restore(); return; }
+<button class="symbol-btn" onclick="insertSymbol('π')" title="Pi">π</button>
 
-        const axisX = Math.max(el.x - w/2, Math.min(el.x + w/2, el.x - w/2 + ((0 - minX) / rX) * w));
-        const axisY = Math.max(el.y - h/2, Math.min(el.y + h/2, el.y + h/2 - ((0 - minY) / rY) * h));
+<button class="symbol-btn" onclick="insertSymbol('∫ f(x) dx')" title="Integral">∫</button>
 
-        // Cuadrícula
-        ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 1;
-        for (let v = minX; v <= maxX + 0.0001; v += step) {
-          const px = el.x - w/2 + ((v - minX) / rX) * w;
-          ctx.beginPath(); ctx.moveTo(px, el.y - h/2); ctx.lineTo(px, el.y + h/2); ctx.stroke();
-        }
-        for (let v = minY; v <= maxY + 0.0001; v += step) {
-          const py = el.y + h/2 - ((v - minY) / rY) * h;
-          ctx.beginPath(); ctx.moveTo(el.x - w/2, py); ctx.lineTo(el.x + w/2, py); ctx.stroke();
-        }
+<button class="symbol-btn" onclick="insertSymbol('lim (x→a)')" title="Límite">lim</button>
 
-        // Ejes
-        ctx.strokeStyle = el.color || '#000000'; ctx.lineWidth = 2;
-        ctx.beginPath(); ctx.moveTo(el.x - w/2, axisY); ctx.lineTo(el.x + w/2, axisY); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(axisX, el.y - h/2); ctx.lineTo(axisX, el.y + h/2); ctx.stroke();
+</div>
 
-        ctx.font = '11px sans-serif'; ctx.fillStyle = el.color || '#000000';
-        ctx.textAlign = 'center'; ctx.textBaseline = 'top';
-        for (let v = minX; v <= maxX + 0.0001; v += step) {
-          const rV = Math.round(v * 1000) / 1000;
-          const px = el.x - w/2 + ((rV - minX) / rX) * w;
-          ctx.beginPath(); ctx.moveTo(px, axisY - 4); ctx.lineTo(px, axisY + 4); ctx.stroke();
-          if (rV !== 0) ctx.fillText(rV.toString(), px, axisY + 6);
-        }
+<!-- Controles de Zoom -->
 
-        ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
-        for (let v = minY; v <= maxY + 0.0001; v += step) {
-          const rV = Math.round(v * 1000) / 1000;
-          const py = el.y + h/2 - ((rV - minY) / rY) * h;
-          ctx.beginPath(); ctx.moveTo(axisX - 4, py); ctx.lineTo(axisX + 4, py); ctx.stroke();
-          if (rV !== 0) ctx.fillText(rV.toString(), axisX - 7, py);
-        }
-      }
-      ctx.restore();
-    }
+<div class="toolbar-group">
 
-    function drawRemoteCursors() {
-      for (let id in remoteCursors) {
-        const cursor = remoteCursors[id];
-        ctx.save();
-        ctx.fillStyle = cursor.color || '#ef4444';
-        ctx.beginPath();
-        ctx.arc(cursor.x, cursor.y, 6 / scale, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.font = `${12 / scale}px sans-serif`;
-        ctx.fillText(' ✏️ En vivo', cursor.x + 8 / scale, cursor.y + 4 / scale);
-        ctx.restore();
-      }
-    }
+<button onclick="zoomAtCenter(1.2)" title="Acercar">🔍 +</button>
 
-    function redraw() {
-      ctx.save();
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      drawInfiniteGrid();
-      ctx.translate(offsetX, offsetY);
-      ctx.scale(scale, scale);
-      elements.forEach(drawElement);
-      if (currentPath) drawElement(currentPath);
-      for (let key in remotePaths) drawElement(remotePaths[key]);
-      drawRemoteCursors();
-      ctx.restore();
-    }
+<button onclick="zoomAtCenter(0.8)" title="Alejar">🔍 -</button>
 
-    function drawInfiniteGrid() {
-      ctx.save(); ctx.strokeStyle = '#f1f5f9'; ctx.lineWidth = 1;
-      const gSize = 40 * scale;
-      for (let x = offsetX % gSize; x < canvas.width; x += gSize) {
-        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
-      }
-      for (let y = offsetY % gSize; y < canvas.height; y += gSize) {
-        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
-      }
-      ctx.restore();
-    }
+<button onclick="resetZoom()" title="Centrar Vista">🎯 Centrar</button>
 
-    function isNearElement(pos, el) {
-      if (el.type === 'text' || el.type === 'numberline' || el.type === 'cartesian') return Math.hypot(pos.x - el.x, pos.y - el.y) < 120;
-      if (el.type === 'line') return Math.hypot(pos.x - el.x1, pos.y - el.y1) < 50;
-      if ((el.type === 'pen' || el.type === 'marker') && el.points) return el.points.some(p => Math.hypot(pos.x - p.x, pos.y - p.y) < 25);
-      return false;
-    }
+</div>
 
-    function moveElement(el, dx, dy) {
-      if (el.type === 'text' || el.type === 'numberline' || el.type === 'cartesian') { el.x += dx; el.y += dy; }
-      else if (el.type === 'line') { el.x1 += dx; el.y1 += dy; el.x2 += dx; el.y2 += dy; }
-      else if (el.points) { el.points.forEach(p => { p.x += dx; p.y += dy; }); }
-    }
 
-    function removeNearElements(pos) {
-      const len = elements.length;
-      elements = elements.filter(el => !isNearElement(pos, el));
-      if (elements.length !== len) { redraw(); saveLocal(); if (socket) socket.emit('update-board', elements); }
-    }
 
-    function openCartesianModal(d) {
-      document.getElementById('cartMinX').value = d.minX ?? -10;
-      document.getElementById('cartMaxX').value = d.maxX ?? 10;
-      document.getElementById('cartMinY').value = d.minY ?? -10;
-      document.getElementById('cartMaxY').value = d.maxY ?? 10;
-      document.getElementById('cartStep').value = d.step || 2;
-      document.getElementById('modalCartesian').classList.add('active');
-    }
+<!-- Estado y Acciones -->
 
-    function openNumberLineModal(d) {
-      document.getElementById('nlMin').value = d.min ?? -10;
-      document.getElementById('nlMax').value = d.max ?? 10;
-      document.getElementById('nlStep').value = d.step || 2;
-      document.getElementById('modalNumberLine').classList.add('active');
-    }
+<span id="status-badge">🟢 En Vivo</span>
 
-    function closeModals() {
-      document.getElementById('modalCartesian').classList.remove('active');
-      document.getElementById('modalNumberLine').classList.remove('active');
-      tempPlacementPos = null; editingElement = null;
-    }
+<button class="btn-danger" onclick="clearBoard()">🗑️ Limpiar Tablero</button>
 
-    function saveCartesianConfig() {
-      const minX = parseFloat(document.getElementById('cartMinX').value);
-      const maxX = parseFloat(document.getElementById('cartMaxX').value);
-      const minY = parseFloat(document.getElementById('cartMinY').value);
-      const maxY = parseFloat(document.getElementById('cartMaxY').value);
-      const step = parseFloat(document.getElementById('cartStep').value) || 2;
+</div>
 
-      if (editingElement) {
-        Object.assign(editingElement, { minX, maxX, minY, maxY, step });
-        if (socket) socket.emit('update-board', elements);
-      } else if (tempPlacementPos) {
-        const cart = { id: Date.now(), type: 'cartesian', x: tempPlacementPos.x, y: tempPlacementPos.y, minX, maxX, minY, maxY, step, color, size: 2 };
-        elements.push(cart);
-        if (socket) socket.emit('draw', cart);
-      }
-      saveLocal(); closeModals(); redraw();
-    }
 
-    function saveNumberLineConfig() {
-      const min = parseFloat(document.getElementById('nlMin').value);
-      const max = parseFloat(document.getElementById('nlMax').value);
-      const step = parseFloat(document.getElementById('nlStep').value) || 2;
 
-      if (editingElement) {
-        Object.assign(editingElement, { min, max, step });
-        if (socket) socket.emit('update-board', elements);
-      } else if (tempPlacementPos) {
-        const nl = { id: Date.now(), type: 'numberline', x: tempPlacementPos.x, y: tempPlacementPos.y, min, max, step, color, size: 2 };
-        elements.push(nl);
-        if (socket) socket.emit('draw', nl);
-      }
-      saveLocal(); closeModals(); redraw();
-    }
+<div id="canvas-container">
 
-    function clearBoard() {
-      if (confirm("¿Limpiar todo el tablero?")) {
-        elements = []; saveLocal(); redraw();
-        if (socket) socket.emit('clear');
-      }
-    }
+<canvas id="board"></canvas>
 
-    if (socket) {
-      socket.on('init', (data) => { elements = data; saveLocal(); redraw(); });
-      socket.on('draw', (data) => { elements.push(data); saveLocal(); redraw(); });
-      socket.on('update-board', (data) => { elements = data; saveLocal(); redraw(); });
-      socket.on('clear', () => { elements = []; saveLocal(); redraw(); });
+</div>
 
-      // Transmisión y visualización en tiempo real mientras otra persona dibuja
-      socket.on('drawing-start', (data) => { remotePaths[data.id] = data; redraw(); });
-      socket.on('drawing-step', (data) => {
-        if (remotePaths[data.id]) {
-          remotePaths[data.id].points.push(data.point);
-          redraw();
-        }
-      });
-      socket.on('drawing-end', (data) => {
-        delete remotePaths[data.id];
-        redraw();
-      });
-      socket.on('cursor-move', (data) => {
-        remoteCursors[data.id || 'peer'] = data;
-        redraw();
-      });
-    }
 
-    resizeCanvas();
-  </script>
+
+<!-- Modal Configuración Plano Cartesiano -->
+
+<div id="modalCartesian" class="modal">
+
+<div class="modal-card">
+
+<h3>📈 Configurar Plano Cartesiano</h3>
+
+<div class="form-group"><label>Mínimo en X:</label><input type="number" id="cartMinX" value="-10"></div>
+
+<div class="form-group"><label>Máximo en X:</label><input type="number" id="cartMaxX" value="10"></div>
+
+<div class="form-group"><label>Mínimo en Y:</label><input type="number" id="cartMinY" value="-10"></div>
+
+<div class="form-group"><label>Máximo en Y:</label><input type="number" id="cartMaxY" value="10"></div>
+
+<div class="form-group"><label>Paso / Incremento de cuadrícula:</label><input type="number" id="cartStep" value="2" min="0.1" step="any"></div>
+
+<div class="modal-actions">
+
+<button onclick="closeModals()">Cancelar</button>
+
+<button class="btn-primary" onclick="saveCartesianConfig()">Aplicar</button>
+
+</div>
+
+</div>
+
+</div>
+
+
+
+
+<!-- Modal Configuración Recta Numérica -->
+
+<div id="modalNumberLine" class="modal">
+
+<div class="modal-card">
+
+<h3>🔢 Configurar Recta Numérica</h3>
+
+<div class="form-group"><label>Valor Mínimo (Inicio):</label><input type="number" id="nlMin" value="-10"></div>
+
+<div class="form-group"><label>Valor Máximo (Fin):</label><input type="number" id="nlMax" value="10"></div>
+
+<div class="form-group"><label>Paso / Incremento:</label><input type="number" id="nlStep" value="2" min="0.1" step="any"></div>
+
+<div class="modal-actions">
+
+<button onclick="closeModals()">Cancelar</button>
+
+<button class="btn-primary" onclick="saveNumberLineConfig()">Aplicar</button>
+
+</div>
+
+</div>
+
+</div>
+
+
+
+<script>
+
+// Inicialización con soporte para conexión inestable / offline
+
+let socket = null;
+
+try {
+
+if (typeof io !== 'undefined') {
+
+socket = io({ reconnectionAttempts: 10, timeout: 5000 });
+
+}
+
+} catch(e){}
+
+
+
+const statusBadge = document.getElementById('status-badge');
+
+if (socket) {
+
+socket.on('connect', () => { statusBadge.textContent = "🟢 En Vivo"; statusBadge.classList.remove('offline'); });
+
+socket.on('disconnect', () => { statusBadge.textContent = "🟠 Modo Offline"; statusBadge.classList.add('offline'); });
+
+socket.on('connect_error', () => { statusBadge.textContent = "🟠 Local / Sin Red"; statusBadge.classList.add('offline'); });
+
+} else {
+
+statusBadge.textContent = "🟠 Modo Local";
+
+statusBadge.classList.add('offline');
+
+}
+
+
+
+const canvas = document.getElementById('board');
+
+const ctx = canvas.getContext('2d');
+
+const container = document.getElementById('canvas-container');
+
+
+
+let elements = JSON.parse(localStorage.getItem('tablero_elements') || '[]');
+
+let currentPath = null;
+
+
+
+let tool = 'pen';
+
+let color = '#000000';
+
+let size = 5;
+
+
+
+// MATRIZ DE TRANSFORMACIÓN INFINITA (Zoom y Desplazamiento preciso)
+
+let scale = 1;
+
+let offsetX = 0;
+
+let offsetY = 0;
+
+
+
+let isDrawing = false;
+
+let startX = 0, startY = 0;
+
+let lastScreenX = 0, lastScreenY = 0;
+
+let selectedElement = null;
+
+let editingElement = null;
+
+let tempPlacementPos = null;
+
+
+
+function saveLocal() {
+
+try { localStorage.setItem('tablero_elements', JSON.stringify(elements)); } catch(e){}
+
+}
+
+
+
+function resizeCanvas() {
+
+canvas.width = container.clientWidth;
+
+canvas.height = container.clientHeight;
+
+redraw();
+
+}
+
+window.addEventListener('resize', resizeCanvas);
+
+
+
+document.getElementById('toolSelect').addEventListener('change', (e) => {
+
+tool = e.target.value;
+
+canvas.style.cursor = (tool === 'pan') ? 'grab' : ((tool === 'select') ? 'pointer' : 'crosshair');
+
+});
+
+document.getElementById('colorPicker').addEventListener('change', (e) => color = e.target.value);
+
+document.getElementById('lineWidth').addEventListener('change', (e) => size = parseInt(e.target.value));
+
+
+
+// Conversión de Coordenadas de Pantalla a Espacio Infinito
+
+function screenToWorld(sx, sy) {
+
+return { x: (sx - offsetX) / scale, y: (sy - offsetY) / scale };
+
+}
+
+
+
+function getPos(e) {
+
+const rect = canvas.getBoundingClientRect();
+
+const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+
+const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+const screenX = clientX - rect.left;
+
+const screenY = clientY - rect.top;
+
+const world = screenToWorld(screenX, screenY);
+
+return { x: world.x, y: world.y, screenX, screenY };
+
+}
+
+
+
+function startAction(e) {
+
+if (e.touches && e.touches.length > 1) return;
+
+isDrawing = true;
+
+const pos = getPos(e);
+
+startX = pos.x; startY = pos.y;
+
+lastScreenX = pos.screenX; lastScreenY = pos.screenY;
+
+
+
+if (tool === 'pen' || tool === 'marker') {
+
+currentPath = { id: Date.now() + Math.random(), type: tool, color, size, points: [{ x: pos.x, y: pos.y }] };
+
+} else if (tool === 'select') {
+
+selectedElement = elements.slice().reverse().find(el => isNearElement(pos, el));
+
+} else if (tool === 'eraser') {
+
+removeNearElements(pos);
+
+} else if (tool === 'cartesian') {
+
+tempPlacementPos = { x: pos.x, y: pos.y };
+
+editingElement = null;
+
+openCartesianModal({ minX: -10, maxX: 10, minY: -10, maxY: 10, step: 2 });
+
+isDrawing = false;
+
+} else if (tool === 'numberline') {
+
+tempPlacementPos = { x: pos.x, y: pos.y };
+
+editingElement = null;
+
+openNumberLineModal({ min: -10, max: 10, step: 2 });
+
+isDrawing = false;
+
+}
+
+}
+
+
+
+function moveAction(e) {
+
+if (!isDrawing) return;
+
+const pos = getPos(e);
+
+
+
+if (tool === 'pan') {
+
+offsetX += pos.screenX - lastScreenX;
+
+offsetY += pos.screenY - lastScreenY;
+
+lastScreenX = pos.screenX;
+
+lastScreenY = pos.screenY;
+
+redraw();
+
+return;
+
+}
+
+
+
+if ((tool === 'pen' || tool === 'marker') && currentPath) {
+
+currentPath.points.push({ x: pos.x, y: pos.y });
+
+redraw();
+
+} else if (tool === 'select' && selectedElement) {
+
+moveElement(selectedElement, pos.x - startX, pos.y - startY);
+
+startX = pos.x; startY = pos.y;
+
+redraw();
+
+if (socket) socket.emit('update-board', elements);
+
+} else if (tool === 'eraser') {
+
+removeNearElements(pos);
+
+}
+
+}
+
+
+
+function endAction() {
+
+if (!isDrawing) return;
+
+isDrawing = false;
+
+
+
+if ((tool === 'pen' || tool === 'marker') && currentPath) {
+
+elements.push(currentPath);
+
+if (socket) socket.emit('draw', currentPath);
+
+saveLocal(); currentPath = null;
+
+} else if (tool === 'line') {
+
+const line = { id: Date.now(), type: 'line', x1: startX, y1: startY, x2: startX + 160, y2: startY, color, size };
+
+elements.push(line);
+
+if (socket) socket.emit('draw', line);
+
+saveLocal(); redraw();
+
+} else if (tool === 'select' && selectedElement) {
+
+if (socket) socket.emit('update-board', elements);
+
+saveLocal(); selectedElement = null;
+
+}
+
+}
+
+
+
+// Zoom centrado exactamente en el cursor
+
+canvas.addEventListener('wheel', (e) => {
+
+e.preventDefault();
+
+const zoomFactor = e.deltaY < 0 ? 1.12 : 0.88;
+
+const rect = canvas.getBoundingClientRect();
+
+zoomAtPixel(zoomFactor, e.clientX - rect.left, e.clientY - rect.top);
+
+}, { passive: false });
+
+
+
+function zoomAtPixel(factor, px, py) {
+
+const newScale = Math.max(0.05, Math.min(20, scale * factor));
+
+offsetX = px - (px - offsetX) * (newScale / scale);
+
+offsetY = py - (py - offsetY) * (newScale / scale);
+
+scale = newScale;
+
+redraw();
+
+}
+
+
+
+function zoomAtCenter(factor) { zoomAtPixel(factor, canvas.width / 2, canvas.height / 2); }
+
+function resetZoom() { scale = 1; offsetX = 0; offsetY = 0; redraw(); }
+
+
+
+canvas.addEventListener('dblclick', (e) => {
+
+const pos = getPos(e);
+
+const clickedEl = elements.slice().reverse().find(el => isNearElement(pos, el));
+
+if (clickedEl) {
+
+if (clickedEl.type === 'cartesian') { editingElement = clickedEl; openCartesianModal(clickedEl); }
+
+else if (clickedEl.type === 'numberline') { editingElement = clickedEl; openNumberLineModal(clickedEl); }
+
+}
+
+});
+
+
+
+canvas.addEventListener('mousedown', startAction);
+
+canvas.addEventListener('mousemove', moveAction);
+
+canvas.addEventListener('mouseup', endAction);
+
+canvas.addEventListener('touchstart', startAction, { passive: true });
+
+canvas.addEventListener('touchmove', moveAction, { passive: true });
+
+canvas.addEventListener('touchend', endAction);
+
+
+
+function insertSymbol(text) {
+
+const c = screenToWorld(canvas.width / 2, canvas.height / 2);
+
+const elem = { id: Date.now(), type: 'text', text, x: c.x, y: c.y, color, size: 32 };
+
+elements.push(elem);
+
+if (socket) socket.emit('draw', elem);
+
+saveLocal(); redraw();
+
+}
+
+
+
+// RENDERIZADO
+
+function drawElement(el) {
+
+ctx.save();
+
+ctx.strokeStyle = el.color || '#000000';
+
+ctx.fillStyle = el.color || '#000000';
+
+ctx.lineWidth = el.size || 2;
+
+ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+
+
+
+if (el.type === 'pen') {
+
+if (!el.points || el.points.length < 2) { ctx.restore(); return; }
+
+ctx.beginPath();
+
+ctx.moveTo(el.points[0].x, el.points[0].y);
+
+for (let i = 1; i < el.points.length; i++) ctx.lineTo(el.points[i].x, el.points[i].y);
+
+ctx.stroke();
+
+} else if (el.type === 'marker') {
+
+if (!el.points || el.points.length < 2) { ctx.restore(); return; }
+
+ctx.globalAlpha = 0.35;
+
+ctx.lineWidth = (el.size || 5) * 2.5;
+
+ctx.beginPath();
+
+ctx.moveTo(el.points[0].x, el.points[0].y);
+
+for (let i = 1; i < el.points.length; i++) ctx.lineTo(el.points[i].x, el.points[i].y);
+
+ctx.stroke();
+
+} else if (el.type === 'text') {
+
+ctx.font = `bold ${el.size || 32}px serif`;
+
+ctx.fillText(el.text, el.x, el.y);
+
+} else if (el.type === 'line') {
+
+ctx.beginPath(); ctx.moveTo(el.x1, el.y1); ctx.lineTo(el.x2, el.y2); ctx.stroke();
+
+} else if (el.type === 'numberline') {
+
+const min = el.min !== undefined ? parseFloat(el.min) : -10;
+
+const max = el.max !== undefined ? parseFloat(el.max) : 10;
+
+const step = (el.step && parseFloat(el.step) > 0) ? parseFloat(el.step) : 2;
+
+const width = 450; const range = max - min;
+
+if (range <= 0) { ctx.restore(); return; }
+
+
+
+ctx.lineWidth = 2;
+
+ctx.beginPath(); ctx.moveTo(el.x - width/2, el.y); ctx.lineTo(el.x + width/2, el.y); ctx.stroke();
+
+
+
+ctx.font = '12px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+
+for (let val = min; val <= max + 0.0001; val += step) {
+
+const rVal = Math.round(val * 1000) / 1000;
+
+const px = (el.x - width/2) + ((rVal - min) / range) * width;
+
+ctx.beginPath(); ctx.moveTo(px, el.y - 5); ctx.lineTo(px, el.y + 5); ctx.stroke();
+
+ctx.fillText(rVal.toString(), px, el.y + 8);
+
+}
+
+} else if (el.type === 'cartesian') {
+
+const minX = parseFloat(el.minX ?? -10), maxX = parseFloat(el.maxX ?? 10);
+
+const minY = parseFloat(el.minY ?? -10), maxY = parseFloat(el.maxY ?? 10);
+
+const step = parseFloat(el.step || 2);
+
+const w = 400, h = 400, rX = maxX - minX, rY = maxY - minY;
+
+
+
+if (rX <= 0 || rY <= 0) { ctx.restore(); return; }
+
+
+
+const axisX = Math.max(el.x - w/2, Math.min(el.x + w/2, el.x - w/2 + ((0 - minX) / rX) * w));
+
+const axisY = Math.max(el.y - h/2, Math.min(el.y + h/2, el.y + h/2 - ((0 - minY) / rY) * h));
+
+
+
+// Cuadrícula
+
+ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 1;
+
+for (let v = minX; v <= maxX + 0.0001; v += step) {
+
+const px = el.x - w/2 + ((v - minX) / rX) * w;
+
+ctx.beginPath(); ctx.moveTo(px, el.y - h/2); ctx.lineTo(px, el.y + h/2); ctx.stroke();
+
+}
+
+for (let v = minY; v <= maxY + 0.0001; v += step) {
+
+const py = el.y + h/2 - ((v - minY) / rY) * h;
+
+ctx.beginPath(); ctx.moveTo(el.x - w/2, py); ctx.lineTo(el.x + w/2, py); ctx.stroke();
+
+}
+
+
+
+// Ejes
+
+ctx.strokeStyle = el.color || '#000000'; ctx.lineWidth = 2;
+
+ctx.beginPath(); ctx.moveTo(el.x - w/2, axisY); ctx.lineTo(el.x + w/2, axisY); ctx.stroke();
+
+ctx.beginPath(); ctx.moveTo(axisX, el.y - h/2); ctx.lineTo(axisX, el.y + h/2); ctx.stroke();
+
+
+
+ctx.font = '11px sans-serif'; ctx.fillStyle = el.color || '#000000';
+
+ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+
+for (let v = minX; v <= maxX + 0.0001; v += step) {
+
+const rV = Math.round(v * 1000) / 1000;
+
+const px = el.x - w/2 + ((rV - minX) / rX) * w;
+
+ctx.beginPath(); ctx.moveTo(px, axisY - 4); ctx.lineTo(px, axisY + 4); ctx.stroke();
+
+if (rV !== 0) ctx.fillText(rV.toString(), px, axisY + 6);
+
+}
+
+
+
+ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+
+for (let v = minY; v <= maxY + 0.0001; v += step) {
+
+const rV = Math.round(v * 1000) / 1000;
+
+const py = el.y + h/2 - ((rV - minY) / rY) * h;
+
+ctx.beginPath(); ctx.moveTo(axisX - 4, py); ctx.lineTo(axisX + 4, py); ctx.stroke();
+
+if (rV !== 0) ctx.fillText(rV.toString(), axisX - 7, py);
+
+}
+
+}
+
+ctx.restore();
+
+}
+
+
+
+function redraw() {
+
+ctx.save();
+
+ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+drawInfiniteGrid();
+
+ctx.translate(offsetX, offsetY);
+
+ctx.scale(scale, scale);
+
+elements.forEach(drawElement);
+
+if (currentPath) drawElement(currentPath);
+
+ctx.restore();
+
+}
+
+
+
+function drawInfiniteGrid() {
+
+ctx.save(); ctx.strokeStyle = '#f1f5f9'; ctx.lineWidth = 1;
+
+const gSize = 40 * scale;
+
+for (let x = offsetX % gSize; x < canvas.width; x += gSize) {
+
+ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
+
+}
+
+for (let y = offsetY % gSize; y < canvas.height; y += gSize) {
+
+ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
+
+}
+
+ctx.restore();
+
+}
+
+
+
+function isNearElement(pos, el) {
+
+if (el.type === 'text' || el.type === 'numberline' || el.type === 'cartesian') return Math.hypot(pos.x - el.x, pos.y - el.y) < 120;
+
+if (el.type === 'line') return Math.hypot(pos.x - el.x1, pos.y - el.y1) < 50;
+
+if ((el.type === 'pen' || el.type === 'marker') && el.points) return el.points.some(p => Math.hypot(pos.x - p.x, pos.y - p.y) < 25);
+
+return false;
+
+}
+
+
+
+function moveElement(el, dx, dy) {
+
+if (el.type === 'text' || el.type === 'numberline' || el.type === 'cartesian') { el.x += dx; el.y += dy; }
+
+else if (el.type === 'line') { el.x1 += dx; el.y1 += dy; el.x2 += dx; el.y2 += dy; }
+
+else if (el.points) { el.points.forEach(p => { p.x += dx; p.y += dy; }); }
+
+}
+
+
+
+function removeNearElements(pos) {
+
+const len = elements.length;
+
+elements = elements.filter(el => !isNearElement(pos, el));
+
+if (elements.length !== len) { redraw(); saveLocal(); if (socket) socket.emit('update-board', elements); }
+
+}
+
+
+
+function openCartesianModal(d) {
+
+document.getElementById('cartMinX').value = d.minX ?? -10;
+
+document.getElementById('cartMaxX').value = d.maxX ?? 10;
+
+document.getElementById('cartMinY').value = d.minY ?? -10;
+
+document.getElementById('cartMaxY').value = d.maxY ?? 10;
+
+document.getElementById('cartStep').value = d.step || 2;
+
+document.getElementById('modalCartesian').classList.add('active');
+
+}
+
+
+
+function openNumberLineModal(d) {
+
+document.getElementById('nlMin').value = d.min ?? -10;
+
+document.getElementById('nlMax').value = d.max ?? 10;
+
+document.getElementById('nlStep').value = d.step || 2;
+
+document.getElementById('modalNumberLine').classList.add('active');
+
+}
+
+
+
+function closeModals() {
+
+document.getElementById('modalCartesian').classList.remove('active');
+
+document.getElementById('modalNumberLine').classList.remove('active');
+
+tempPlacementPos = null; editingElement = null;
+
+}
+
+
+
+function saveCartesianConfig() {
+
+const minX = parseFloat(document.getElementById('cartMinX').value);
+
+const maxX = parseFloat(document.getElementById('cartMaxX').value);
+
+const minY = parseFloat(document.getElementById('cartMinY').value);
+
+const maxY = parseFloat(document.getElementById('cartMaxY').value);
+
+const step = parseFloat(document.getElementById('cartStep').value) || 2;
+
+
+
+if (editingElement) {
+
+Object.assign(editingElement, { minX, maxX, minY, maxY, step });
+
+if (socket) socket.emit('update-board', elements);
+
+} else if (tempPlacementPos) {
+
+const cart = { id: Date.now(), type: 'cartesian', x: tempPlacementPos.x, y: tempPlacementPos.y, minX, maxX, minY, maxY, step, color, size: 2 };
+
+elements.push(cart);
+
+if (socket) socket.emit('draw', cart);
+
+}
+
+saveLocal(); closeModals(); redraw();
+
+}
+
+
+
+function saveNumberLineConfig() {
+
+const min = parseFloat(document.getElementById('nlMin').value);
+
+const max = parseFloat(document.getElementById('nlMax').value);
+
+const step = parseFloat(document.getElementById('nlStep').value) || 2;
+
+
+
+if (editingElement) {
+
+Object.assign(editingElement, { min, max, step });
+
+if (socket) socket.emit('update-board', elements);
+
+} else if (tempPlacementPos) {
+
+const nl = { id: Date.now(), type: 'numberline', x: tempPlacementPos.x, y: tempPlacementPos.y, min, max, step, color, size: 2 };
+
+elements.push(nl);
+
+if (socket) socket.emit('draw', nl);
+
+}
+
+saveLocal(); closeModals(); redraw();
+
+}
+
+
+
+function clearBoard() {
+
+if (confirm("¿Limpiar todo el tablero?")) {
+
+elements = []; saveLocal(); redraw();
+
+if (socket) socket.emit('clear');
+
+}
+
+}
+
+
+
+if (socket) {
+
+socket.on('init', (data) => { elements = data; saveLocal(); redraw(); });
+
+socket.on('draw', (data) => { elements.push(data); saveLocal(); redraw(); });
+
+socket.on('update-board', (data) => { elements = data; saveLocal(); redraw(); });
+
+socket.on('clear', () => { elements = []; saveLocal(); redraw(); });
+
+}
+
+
+
+resizeCanvas();
+
+</script>
+
 </body>
-</html>
+
+</html> 
+
+
