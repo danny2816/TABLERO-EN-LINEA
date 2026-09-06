@@ -6,23 +6,30 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: "*" } });
 
-app.use(express.static('public'));
+let boardData = [];
 
-let boardState = [];
+app.use(express.static(__dirname));
 
 io.on('connection', (socket) => {
-    socket.emit('init-board', boardState);
+  socket.emit('init', boardData);
 
-    socket.on('draw-action', (action) => {
-        boardState.push(action);
-        socket.broadcast.emit('draw-action', action);
-    });
+  socket.on('draw', (data) => {
+    boardData.push(data);
+    socket.broadcast.emit('draw', data);
+  });
 
-    socket.on('clear-board', () => {
-        boardState = [];
-        io.emit('clear-board');
-    });
+  socket.on('update-board', (data) => {
+    boardData = data;
+    socket.broadcast.emit('update-board', boardData);
+  });
+
+  socket.on('clear', () => {
+    boardData = [];
+    socket.broadcast.emit('clear');
+  });
 });
 
-const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`Servidor activo`));
+const PORT = 3000;
+server.listen(PORT, '0.0.0.0', () => {
+  console.log(`Tablero en vivo activo en puerto ${PORT}`);
+});
