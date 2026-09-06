@@ -178,6 +178,8 @@
 
     let elements = JSON.parse(localStorage.getItem('tablero_elements') || '[]');
     let currentPath = null;
+    let remotePaths = {};
+    let remoteCursors = {};
 
     let tool = 'pen';
     let color = '#000000';
@@ -237,6 +239,7 @@
 
       if (tool === 'pen' || tool === 'marker') {
         currentPath = { id: Date.now() + Math.random(), type: tool, color, size, points: [{ x: pos.x, y: pos.y }] };
+        if (socket) socket.emit('drawing-start', currentPath);
       } else if (tool === 'select') {
         selectedElement = elements.slice().reverse().find(el => isNearElement(pos, el));
       } else if (tool === 'eraser') {
@@ -255,8 +258,10 @@
     }
 
     function moveAction(e) {
-      if (!isDrawing) return;
       const pos = getPos(e);
+      if (socket) socket.emit('cursor-move', { x: pos.x, y: pos.y, color });
+
+      if (!isDrawing) return;
 
       if (tool === 'pan') {
         offsetX += pos.screenX - lastScreenX;
@@ -270,6 +275,7 @@
       if ((tool === 'pen' || tool === 'marker') && currentPath) {
         currentPath.points.push({ x: pos.x, y: pos.y });
         redraw();
+        if (socket) socket.emit('drawing-step', { id: currentPath.id, point: { x: pos.x, y: pos.y } });
       } else if (tool === 'select' && selectedElement) {
         moveElement(selectedElement, pos.x - startX, pos.y - startY);
         startX = pos.x; startY = pos.y;
@@ -286,7 +292,10 @@
 
       if ((tool === 'pen' || tool === 'marker') && currentPath) {
         elements.push(currentPath);
-        if (socket) socket.emit('draw', currentPath);
+        if (socket) {
+          socket.emit('drawing-end', currentPath);
+          socket.emit('draw', currentPath);
+        }
         saveLocal(); currentPath = null;
       } else if (tool === 'line') {
         const line = { id: Date.now(), type: 'line', x1: startX, y1: startY, x2: startX + 160, y2: startY, color, size };
@@ -433,6 +442,20 @@
       ctx.restore();
     }
 
+    function drawRemoteCursors() {
+      for (let id in remoteCursors) {
+        const cursor = remoteCursors[id];
+        ctx.save();
+        ctx.fillStyle = cursor.color || '#ef4444';
+        ctx.beginPath();
+        ctx.arc(cursor.x, cursor.y, 6 / scale, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.font = `${12 / scale}px sans-serif`;
+        ctx.fillText(' ✏️ En vivo', cursor.x + 8 / scale, cursor.y + 4 / scale);
+        ctx.restore();
+      }
+    }
+
     function redraw() {
       ctx.save();
       ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -441,6 +464,8 @@
       ctx.scale(scale, scale);
       elements.forEach(drawElement);
       if (currentPath) drawElement(currentPath);
+      for (let key in remotePaths) drawElement(remotePaths[key]);
+      drawRemoteCursors();
       ctx.restore();
     }
 
@@ -543,6 +568,23 @@
       socket.on('draw', (data) => { elements.push(data); saveLocal(); redraw(); });
       socket.on('update-board', (data) => { elements = data; saveLocal(); redraw(); });
       socket.on('clear', () => { elements = []; saveLocal(); redraw(); });
+
+      // Transmisión y visualización en tiempo real mientras otra persona dibuja
+      socket.on('drawing-start', (data) => { remotePaths[data.id] = data; redraw(); });
+      socket.on('drawing-step', (data) => {
+        if (remotePaths[data.id]) {
+          remotePaths[data.id].points.push(data.point);
+          redraw();
+        }
+      });
+      socket.on('drawing-end', (data) => {
+        delete remotePaths[data.id];
+        redraw();
+      });
+      socket.on('cursor-move', (data) => {
+        remoteCursors[data.id || 'peer'] = data;
+        redraw();
+      });
     }
 
     resizeCanvas();
